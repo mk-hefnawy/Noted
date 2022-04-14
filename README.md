@@ -9,6 +9,7 @@
 Noted is an android application for taking notes. The user can create, edit, review, and delete notes. They also can specify a category for each note.
 
 ## Architecture
+Clean Architecture
 ![CLean-Architecture](https://user-images.githubusercontent.com/69528783/163322346-c353fd9b-3a45-4853-9b83-b44533629225.png)
 
 * Data Layer
@@ -22,6 +23,7 @@ All the things that the user can do in the application are mapped to use cases p
 Request Objects, Activities, Fragments, and ViewModels live here. Activities and Fragments take the user events then trigger a specific methods of the ViewModel to handle that event. 
 The viewModel triggers the use case for that event and subscribe to the use case's Observables.
 
+Clean Architecture with Reactive Programming
 ![Clean-with-RX](https://user-images.githubusercontent.com/69528783/163322998-44951956-6c5d-4d33-a94e-054e3590a847.png)
 
 
