@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    android:id="@+id/noteCardView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+
+    app:cardCornerRadius="@dimen/_5sdp"
+    app:strokeColor="@color/blueGrey"
+    android:elevation="@dimen/_5sdp"
+    >
+
+<androidx.constraintlayout.widget.ConstraintLayout
+   android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+    <TextView
+        android:id="@+id/noteTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:text="Note Title"
+        android:textStyle="bold"
+        android:textSize="@dimen/_18sdp"
+
+        app:layout_constraintStart_toEndOf="@id/noteLeftGuideline"
+        app:layout_constraintTop_toBottomOf="@id/noteTopGuideline"
+        />
+
+    <TextView
+        android:id="@+id/noteCategory"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:text="Note Category"
+
+        app:layout_constraintStart_toEndOf="@id/noteLeftGuideline"
+        app:layout_constraintTop_toBottomOf="@id/noteTitle"/>
+
+    <ImageView
+        android:id="@+id/noteOptions"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/outline_more_vert_black_36"
+
+        app:layout_constraintTop_toBottomOf="@id/noteTopGuideline"
+        app:layout_constraintEnd_toStartOf="@id/noteRightGuideline"/>
+
+    <TextView
+        android:id="@+id/noteBody"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+
+        app:layout_constraintStart_toEndOf="@id/noteLeftGuideline"
+        app:layout_constraintEnd_toStartOf="@id/noteRightGuideline"
+        app:layout_constraintTop_toBottomOf="@id/noteCategory"
+        app:layout_constraintBottom_toTopOf="@id/noteBottomGuideline"/>
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/noteBottomGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.97" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/noteTopGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.03" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/noteLeftGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.03" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/noteRightGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.97"/>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+    </com.google.android.material.card.MaterialCardView>
