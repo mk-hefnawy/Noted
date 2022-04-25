@@ -10,21 +10,77 @@
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/addEditFragmentRoot"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context=".feature_note.presentation.add_edit_note.AddEditFragment">
 
+        <TextView
+            android:id="@+id/newNoteTV"
+            style="@style/NoteTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/new_note"
+            app:layout_constraintStart_toStartOf="@+id/leftGuideline"
+            app:layout_constraintTop_toTopOf="@+id/topGuideline" />
 
-        <EditText
+        <ImageView
+            android:id="@+id/chooseColorImageView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/outline_palette_black_36"
+            app:layout_constraintBottom_toTopOf="@+id/colorsRecyclerViewContainer"
+            app:layout_constraintEnd_toStartOf="@+id/rightGuideline"
+
+            app:layout_constraintTop_toTopOf="@id/topGuideline" />
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/colorsRecyclerViewContainer"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            style="@style/NoteTitle"
-            android:hint="Note Title"
+            android:visibility="gone"
+            app:layout_constraintEnd_toStartOf="@+id/rightGuideline"
+            app:layout_constraintStart_toStartOf="@+id/leftGuideline"
+            app:layout_constraintTop_toBottomOf="@id/newNoteTV"
+            app:layout_constraintBottom_toTopOf="@id/whatDoYouWantETContainer">
 
-            app:layout_constraintEnd_toStartOf="@id/noteTitleCreateButtonGuideline"
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/colorsRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"/>
+
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/whatDoYouWantETContainer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+
+
+            app:cardCornerRadius="@dimen/_10sdp"
+            app:layout_constraintEnd_toStartOf="@+id/rightGuideline"
             app:layout_constraintStart_toEndOf="@id/leftGuideline"
-            app:layout_constraintTop_toBottomOf="@id/topGuideline"/>
+            app:layout_constraintTop_toBottomOf="@+id/colorsRecyclerViewContainer">
+
+            <EditText
+                android:id="@+id/whatDoYouWantET"
+                style="@style/NoteHint"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/lightGrey"
+                android:hint="What do you want to do?"
+
+                android:padding="@dimen/_10sdp" />
+        </androidx.cardview.widget.CardView>
+
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/colorButtonGuideline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.75"/>
 
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/leftGuideline"
@@ -32,6 +88,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             app:layout_constraintGuide_percent="0.03"/>
+
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/rightGuideline"
             android:layout_width="wrap_content"
@@ -53,12 +110,7 @@
             app:layout_constraintGuide_percent="0.97"
             app:layout_constraintStart_toStartOf="parent" />
 
-        <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/noteTitleCreateButtonGuideline"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.75"/>
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

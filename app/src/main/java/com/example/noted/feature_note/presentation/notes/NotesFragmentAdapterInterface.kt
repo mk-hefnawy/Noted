@@ -2,6 +2,6 @@ package com.example.noted.feature_note.presentation.notes
 
 import com.example.noted.feature_note.presentation.model.ViewNote
 
-interface NotesActivityAdapterInterface {
+interface NotesFragmentAdapterInterface {
     fun onNoteLongClicked(note: ViewNote)
 }

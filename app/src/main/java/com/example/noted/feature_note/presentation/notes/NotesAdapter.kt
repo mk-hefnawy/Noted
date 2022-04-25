@@ -7,11 +7,10 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.noted.R
 import com.example.noted.databinding.NoteItemBinding
-import com.example.noted.feature_note.domain.model.Note
 import com.example.noted.feature_note.presentation.model.ViewNote
 import com.google.android.material.card.MaterialCardView
 
-class NotesAdapter(val notesActivityAdapterInterface: NotesActivityAdapterInterface): RecyclerView.Adapter<NotesAdapter.NoteViewHolder>() {
+class NotesAdapter(val notesActivityAdapterInterface: NotesFragmentAdapterInterface): RecyclerView.Adapter<NotesAdapter.NoteViewHolder>() {
     var notes: ArrayList<ViewNote> = arrayListOf()
     lateinit var noteItemBinding: NoteItemBinding
 
