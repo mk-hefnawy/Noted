@@ -13,11 +13,14 @@
     <color name="lightRed">#feebed</color>
     <color name="midRed">#ff787d</color>
     <color name="lightGrey">#f2f4f8</color>
+    <color name="lightGreen">#81c784</color>
+    <color name="cyan">#18ffff</color>
+    <color name="darkCyan">#0088a3</color>
 
     <color name="yellow">#fff59d</color>
     <color name="red">#BA0000</color>
     <color name="orange">#ffc107</color>
     <color name="deepOrange">#ff8a65</color>
     <color name="blueGrey">#90a4ae</color>
-    <color name="green">#81c784</color>
+    <color name="green">#519657</color>
 </resources>

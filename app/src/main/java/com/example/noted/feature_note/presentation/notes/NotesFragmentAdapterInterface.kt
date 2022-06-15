@@ -4,4 +4,6 @@ import com.example.noted.feature_note.presentation.model.ViewNote
 
 interface NotesFragmentAdapterInterface {
     fun onNoteLongClicked(note: ViewNote)
+    fun hideNoteOptions()
+    fun onNoteClicked(note: ViewNote)
 }

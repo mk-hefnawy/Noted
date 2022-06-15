@@ -4,5 +4,7 @@ package com.example.noted.feature_note.domain.use_case
 data class NoteUseCases(
     val getAllNotesUseCase: GetAllNotesUseCase,
     val deleteNotesUseCase: DeleteNotesUseCase,
-    val addNoteUseCase: AddNotesUseCase
+    val addNoteUseCase: AddNotesUseCase,
+    val editNoteUseCase: EditNoteUseCase,
+    val orderNotesUseCase: OrderNotesUseCase
 )

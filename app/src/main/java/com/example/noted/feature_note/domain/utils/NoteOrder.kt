@@ -1,6 +1,6 @@
 package com.example.noted.feature_note.domain.utils
 
-sealed class NoteOrder(val orderType: OrderType){
+sealed class NoteOrder(var orderType: OrderType){
     class Title(orderType: OrderType) : NoteOrder(orderType)
     class Category(orderType: OrderType) : NoteOrder(orderType)
     class Date(orderType: OrderType) : NoteOrder(orderType)

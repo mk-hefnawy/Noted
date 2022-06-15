@@ -4,6 +4,9 @@ import com.example.noted.feature_note.data.data_source.cache.RoomNoteDao
 import com.example.noted.feature_note.data.data_source.remote.RemoteNoteDao
 import com.example.noted.feature_note.data.model.RoomNote
 import com.example.noted.feature_note.data.utils.DataSourceType
+import io.reactivex.rxjava3.core.Completable
+import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.core.Single
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
@@ -25,35 +28,43 @@ class NoteRepositoryImpl: DataNoteRepository {
         dataSourceType = DataSourceType.REMOTE
     }
 
-    override suspend fun addNotes(notes: List<RoomNote>) {
+    override fun addNotes(notes: RoomNote): Single<Long> {
         when(dataSourceType){
-            DataSourceType.CACHE -> roomNoteDao.addNotes(notes)
-            DataSourceType.REMOTE -> remoteNoteDao.addNote(notes[0])
+            DataSourceType.CACHE -> return roomNoteDao.addNotes(notes)
+            DataSourceType.REMOTE -> { TODO()} //remoteNoteDao.addNote(notes[0])
         }
     }
 
-    override suspend fun deleteNotes(notes: List<RoomNote>) {
+    override fun editNote(note: RoomNote): Single<Int> {
+        when(dataSourceType){
+            DataSourceType.CACHE -> return roomNoteDao.editNote(note.id!!, note.title, note.content, note.category, note.date, note.color)
+            DataSourceType.REMOTE -> { TODO()} //remoteNoteDao.addNote(notes[0])
+        }
+    }
+
+    override fun deleteNotes(notesIds: List<Long>): Completable {
         when(dataSourceType){
             DataSourceType.CACHE ->  {
-                roomNoteDao.deleteNotes(notes)
+                return roomNoteDao.deleteNotes(notesIds)
             }
             DataSourceType.REMOTE -> {
-                remoteNoteDao.deleteNote(notes[0])
+                TODO()
+               // remoteNoteDao.deleteNote(notes[0])
             }
+
         }
-
     }
-
     override suspend fun getNoteById(noteId: Int): RoomNote {
         return when(dataSourceType){
             DataSourceType.CACHE -> roomNoteDao.getNoteById(noteId)
             DataSourceType.REMOTE -> remoteNoteDao.getNoteById(noteId)
         }
     }
-    override fun getAllNotes(): Flow<List<RoomNote>> {
-        return when(dataSourceType){
-            DataSourceType.CACHE ->  roomNoteDao.getAllNotes()
-            DataSourceType.REMOTE -> remoteNoteDao.getAllNotes()
+
+    override fun getAllNotes(): Observable<List<RoomNote>> {
+        when(dataSourceType){
+            DataSourceType.CACHE ->  return roomNoteDao.getAllNotes()
+            DataSourceType.REMOTE -> { TODO()}//remoteNoteDao.getAllNotes()
         }
     }
 

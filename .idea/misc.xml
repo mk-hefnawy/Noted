@@ -5,10 +5,13 @@
       <map>
         <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/layout/activity_main.xml" value="0.22" />
         <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/layout/activity_notes.xml" value="0.20416666666666666" />
+        <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/layout/attach_option.xml" value="0.20416666666666666" />
+        <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/layout/attached_image.xml" value="0.20416666666666666" />
         <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/layout/color_item.xml" value="0.22" />
-        <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/layout/fragment_add_edit.xml" value="0.18636363636363637" />
+        <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/layout/fragment_add_edit.xml" value="0.22" />
         <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/layout/fragment_notes.xml" value="0.20416666666666666" />
         <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/layout/note_item.xml" value="0.22" />
+        <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/menu/categories_menu.xml" value="0.20416666666666666" />
       </map>
     </option>
   </component>

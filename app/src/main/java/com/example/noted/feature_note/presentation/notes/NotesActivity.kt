@@ -18,66 +18,34 @@ import kotlinx.coroutines.launch
 
 
 @AndroidEntryPoint
-class NotesActivity : AppCompatActivity(), View.OnClickListener {
+class NotesActivity : AppCompatActivity() {
     private lateinit var notesBinding: ActivityNotesBinding
-    private val addEditFragment = AddEditFragment()
-    private val notesFragment = NotesFragment()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         init()
+        //addNotesFragment()
     }
-    private fun init(){
+
+    private fun init() {
         notesBinding = ActivityNotesBinding.inflate(layoutInflater)
         setContentView(notesBinding.root)
-        setOnClickListeners()
     }
 
-   /* private fun observeStateChanges() {
-        lifecycleScope.launch {
-            notesViewModel.state.collect { notesState ->
-                val notes = notesState.notes
-                adapter.setNotes(notes) // kda 7atta lw note wa7da etdafet,
-            }
-        }
-
-    }*/
-
-    private fun setOnClickListeners(){
-        notesBinding.fabAddSaveNote.setOnClickListener(this)
-    }
-
-    override fun onClick(view: View?) {
-        when(view?.id){
-            notesBinding.fabAddSaveNote.id -> onAddSaveNoteClicked()
-        }
+    private fun addNotesFragment(){
+        supportFragmentManager.beginTransaction().replace(R.id.fragmentsContainer, NotesFragment())
+            .addToBackStack(null)
+            .commit()
     }
 
     override fun onBackPressed() {
-        if (supportFragmentManager.backStackEntryCount > 0){
+        if (supportFragmentManager.backStackEntryCount > 0) {
             supportFragmentManager.popBackStack()
+            Log.d("Here", "Greater than zero")
         }
         else{
             super.onBackPressed()
+            Log.d("Here", "Else")
         }
-    }
-    private fun onAddSaveNoteClicked(){
-        val currentFragment = supportFragmentManager.findFragmentById(R.id.addEditNotesFragmentContainer)
-        // Adding Note
-        if (currentFragment is NotesFragment){
-            Log.d("Here", "Add Note")
-            supportFragmentManager.beginTransaction()
-                .replace(notesBinding.addEditNotesFragmentContainer.id, addEditFragment)
-                .addToBackStack(null)
-                .commit()
-
-            // change the icon of the FAB
-            notesBinding.fabAddSaveNote.setImageResource(R.drawable.baseline_save_white_48)
-        }
-        else{
-            // Saving Note
-
-        }
-
     }
 }

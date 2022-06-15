@@ -23,7 +23,7 @@ object AppModule {
     fun provideNotesRoomDatabase(@ApplicationContext appContext: Context): NotesRoomDatabase {
         return Room.databaseBuilder(appContext,
             NotesRoomDatabase::class.java,
-            NotesRoomDatabase.DATA_BASE_NAME).build()
+            NotesRoomDatabase.DATA_BASE_NAME).fallbackToDestructiveMigration().build()
     }
 
     @Provides
@@ -50,7 +50,9 @@ object AppModule {
         return NoteUseCases(
             getAllNotesUseCase = GetAllNotesUseCase(repository),
             deleteNotesUseCase= DeleteNotesUseCase(repository),
-            addNoteUseCase = AddNotesUseCase(repository)
+            addNoteUseCase = AddNotesUseCase(repository),
+            editNoteUseCase = EditNoteUseCase(repository),
+            orderNotesUseCase = OrderNotesUseCase()
         )
     }
 }

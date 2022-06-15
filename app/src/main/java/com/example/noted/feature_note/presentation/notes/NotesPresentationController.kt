@@ -4,5 +4,5 @@ import com.example.noted.feature_note.domain.utils.NoteOrder
 import com.example.noted.feature_note.domain.utils.OrderType
 
 interface NotesPresentationController {
-    fun onRadioButtonChecked(radioButtonId: Int, stateOrder: NoteOrder, stateOrderType: OrderType)
+    fun onRadioButtonChecked(radioButtonId: Int)
 }

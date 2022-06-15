@@ -7,7 +7,7 @@
     android:layout_height="match_parent">
 
     <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/addEditNotesFragmentContainer"
+        android:id="@+id/fragmentsContainer"
         android:name="com.example.noted.feature_note.presentation.notes.NotesFragment"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -16,15 +16,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabAddSaveNote"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-
-
-        android:src="@drawable/outline_add_black_48"
-        app:layout_constraintBottom_toTopOf="@+id/bottomGuideline"
-        app:layout_constraintEnd_toStartOf="@+id/rightGuideline" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/rightGuideline"

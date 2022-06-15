@@ -1,5 +1,8 @@
 package com.example.noted.feature_note.presentation.notes
 
+import android.util.Log
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.noted.core.ListOfDomainNotesToListOfViewNotes
@@ -8,11 +11,15 @@ import com.example.noted.feature_note.domain.use_case.NoteUseCases
 import com.example.noted.feature_note.domain.utils.NoteOrder
 import com.example.noted.feature_note.domain.utils.OrderType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.core.CompletableObserver
+import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.core.Observer
+import io.reactivex.rxjava3.core.SingleObserver
+import io.reactivex.rxjava3.disposables.Disposable
+import io.reactivex.rxjava3.schedulers.Schedulers
+import io.reactivex.rxjava3.subjects.PublishSubject
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -20,63 +27,94 @@ import javax.inject.Inject
 class NotesViewModel @Inject constructor(
     val noteUseCases: NoteUseCases
 ) : ViewModel() {
+    private val _state = MutableLiveData<NotesState>()
+    val state: LiveData<NotesState> = _state
 
-    //constructor() : this(noteUseCases)
-
-    // observable to hold the state of the UI in the ViewModel
-    private val _state = MutableStateFlow(NotesState())
-    val state: StateFlow<NotesState> = _state
-
-    // caching the deleted note for the Undo command
-    var recentlyDeletedNotes: List<Note>? = null
-
-    // to track the coroutine created for GetAllNotesUseCase
-    private var getAllNotesJob: Job? = null
+    private val _deleteState = MutableLiveData<Boolean>()
+    val deleteState: LiveData<Boolean> = _deleteState
 
     init {
-        // for viewing the notes at the first time
-        getNotes(NoteOrder.Date(OrderType.Ascending))
+        _state.value = NotesState()
     }
 
     fun onEvent(noteEvent: NoteEvent) {
         when (noteEvent) {
-            is NoteEvent.OrderNoteEvent -> {
-                // check if the input order is the same as the current order
-                if (_state.value.noteOrder::class == noteEvent.noteOrder::class
-                    && _state.value.noteOrder.orderType == noteEvent.noteOrder.orderType
-                ) return
+            is NoteEvent.GetAllNotesEvent -> {
                 getNotes(noteEvent.noteOrder)
+            }
 
+            is NoteEvent.OrderNoteEvent -> {
+                Log.d("Here", "Note Order Type: " + noteEvent.noteOrder.orderType)
+                noteUseCases.orderNotesUseCase.invoke(noteEvent.notes, noteEvent.noteOrder)
+                    .subscribeOn(Schedulers.computation())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(object : SingleObserver<List<Note>> {
+                        override fun onSubscribe(d: Disposable) {}
+
+                        override fun onSuccess(sortedNotes: List<Note>) {
+                            val sortedViewNotes =
+                                ListOfDomainNotesToListOfViewNotes.map(sortedNotes)
+                            _state.value = state.value?.copy(notes = sortedViewNotes)
+                            Log.d("Here", state.value.toString())
+                        }
+
+                        override fun onError(e: Throwable) {}
+
+                    })
             }
+
             is NoteEvent.DeleteNotesEvent -> {
-                viewModelScope.launch {
-                    noteUseCases.deleteNotesUseCase(noteEvent.notes)
-                    recentlyDeletedNotes = noteEvent.notes
+                noteUseCases.deleteNotesUseCase(noteEvent.notes.map { it.id!!.toLong()})
+                    .subscribeOn(Schedulers.newThread())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                    object : CompletableObserver {
+                        override fun onSubscribe(d: Disposable) {}
+
+                        override fun onComplete() {
+                            _deleteState.value = true
+                        }
+
+                        override fun onError(e: Throwable) {
+                            e.printStackTrace()
+                            _deleteState.value = false
+                        }
+
+                    })
                 }
-            }
+
             is NoteEvent.RestoreNoteEvent -> {
-                viewModelScope.launch {
+                /*viewModelScope.launch {
                     noteUseCases.addNoteUseCase(recentlyDeletedNotes ?: return@launch)
                     recentlyDeletedNotes = null
-                }
+                }*/
             }
             is NoteEvent.ToggleOrderSectionVisibilityEvent -> {
                 _state.value =
-                    state.value.copy(isOrderSectionVisible = !state.value.isOrderSectionVisible) // toggling
+                    state.value?.copy(isOrderSectionVisible = !state.value!!.isOrderSectionVisible) // toggling
             }
 
         }
     }
 
     private fun getNotes(noteOrder: NoteOrder) {
-        // we need to cancel the coroutine whenever this function returns, if we don't, we will end up having
-        // a coroutine for each call to GetAllNotesUseCase
-        getAllNotesJob?.cancel()
-        getAllNotesJob = noteUseCases.getAllNotesUseCase(noteOrder).onEach { notes ->
-            _state.value = state.value.copy(
-                notes = ListOfDomainNotesToListOfViewNotes.map(notes),
-                noteOrder = noteOrder
-            )
-        }.launchIn(viewModelScope)
+        noteUseCases.getAllNotesUseCase(noteOrder)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(object : Observer<List<Note>> {
+                override fun onSubscribe(d: Disposable) {}
+
+                override fun onNext(notes: List<Note>) {
+                    val viewNotes = ListOfDomainNotesToListOfViewNotes.map(notes)
+                    _state.value = NotesState(notes = viewNotes)
+                    Log.d("Here", "getNotes NotesViewModel onNext")
+                }
+
+                override fun onError(e: Throwable) {
+                    Log.d("Here", "getNotes NotesViewModel onError")
+                }
+
+                override fun onComplete() {}
+            })
     }
 }

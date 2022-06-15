@@ -1,13 +1,16 @@
 package com.example.noted.feature_note.domain.repository
 
-import com.example.noted.feature_note.data.model.RoomNote
 import com.example.noted.feature_note.domain.model.Note
-import kotlinx.coroutines.flow.Flow
+import io.reactivex.rxjava3.core.Completable
+import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.core.Single
 
-// abstraction to be consumed by the business
+
+// abstraction to be consumed by the the data layer
 interface NoteRepository {
-    suspend fun addNotes(notes: List<Note>)
-    suspend fun deleteNotes(notes: List<Note>)
+    fun addNotes(note: Note): Single<Long>
+    fun editNote(note: Note): Single<Int>
+    fun deleteNotes(notesIds: List<Long>): Completable
     suspend fun getNoteById(noteId: Int): Note
-    fun getAllNotes(): Flow<List<Note>>
+    fun getAllNotes(): Observable<List<Note>>
 }

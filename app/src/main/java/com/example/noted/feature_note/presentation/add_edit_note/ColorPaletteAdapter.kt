@@ -16,7 +16,11 @@ class ColorPaletteAdapter(val presentationController: AddEditPresentationControl
         R.color.midRed,
         R.color.red,
         R.color.orange,
-        R.color.deepOrange
+        R.color.deepOrange,
+        R.color.green,
+        R.color.lightGreen,
+        R.color.cyan,
+        R.color.darkCyan
     )
 
     inner class PaletteViewHolder(itemView: View): RecyclerView.ViewHolder(itemView){

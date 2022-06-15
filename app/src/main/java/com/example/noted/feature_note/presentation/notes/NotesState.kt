@@ -6,6 +6,6 @@ import com.example.noted.feature_note.presentation.model.ViewNote
 
 data class NotesState(
     val notes: List<ViewNote> = listOf(),
-    val noteOrder: NoteOrder = NoteOrder.Date(OrderType.Ascending),
+    val noteOrder: NoteOrder = NoteOrder.Title(OrderType.Ascending),
     val isOrderSectionVisible: Boolean = false
 )
