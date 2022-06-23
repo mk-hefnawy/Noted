@@ -1,26 +1,25 @@
 package com.example.noted.feature_note.presentation.add_edit_note
 
 import android.util.Log
+import android.view.View
+import com.example.noted.core.Result
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.noted.R
 import com.example.noted.core.ViewNoteToDomainNote
+import com.example.noted.core.utils.OneTimeEvent
 import com.example.noted.feature_note.domain.InvalidNoteException
 import com.example.noted.feature_note.domain.model.Note
 import com.example.noted.feature_note.domain.use_case.NoteUseCases
+import com.example.noted.feature_note.domain.use_case.attached_image.SaveAttachedImagesUseCase
+import com.example.noted.feature_note.presentation.model.AttachedImage
 import com.example.noted.feature_note.presentation.model.ViewNote
-import com.example.noted.feature_note.presentation.notes.NotesState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.reactivex.rxjava3.core.CompletableObserver
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.SingleObserver
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.subjects.PublishSubject
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -39,21 +38,23 @@ class AddEditNoteViewModel @Inject constructor(
     private val _state = MutableLiveData<AddEditState>()
     val state: LiveData<AddEditState> = _state
 
-    val addNoteSubject = PublishSubject.create<ViewNote>()
-    val editNoteSubject = PublishSubject.create<ViewNote>()
+    private val _saveAttachedImageLiveData = MutableLiveData<OneTimeEvent<Result<String>>>()
+    val saveAttachedImageLiveData: LiveData<OneTimeEvent<Result<String>>> = _saveAttachedImageLiveData
+
+    private val _deleteAttachedImageLiveData = MutableLiveData<OneTimeEvent<AttachedImage>>()
+    val deleteAttachedImageLiveData: LiveData<OneTimeEvent<AttachedImage>> = _deleteAttachedImageLiveData
+
+    private val _editNoteLiveData = MutableLiveData<OneTimeEvent<Result<ViewNote>>>()
+    val editNoteLiveData: LiveData<OneTimeEvent<Result<ViewNote>>> = _editNoteLiveData
+
+    private val _addNoteLiveData = MutableLiveData<OneTimeEvent<Result<ViewNote>>>()
+    val addNoteLiveData: LiveData<OneTimeEvent<Result<ViewNote>>> = _addNoteLiveData
 
     fun onEvent(event: AddEditEvent) {
         when (event) {
-
-          /*  is AddEditEvent.CacheImageEvent -> {
-                    val newList =  _state.value?.attachedImagesUris
-                newList?.add(event.attachedImageUri)
-                    _state.value = _state.value?.copy(attachedImagesUris = newList)
-                }*/
-
             is AddEditEvent.StateChangeEvent -> {
-                Log.d("Here", "Attached Images Size: ${event.state.attachedImagesUris.size}")
                 _state.value = event.state
+                Log.d("Here", "State Change: Attached Images: ${_state.value?.attachedImages?.size}")
             }
 
             is AddEditEvent.ToggleColorPaletteVisibility -> {
@@ -61,28 +62,37 @@ class AddEditNoteViewModel @Inject constructor(
                 _state.value =
                     _state.value?.copy(isColorPaletteVisible = !isVisible)
             }
+            is AddEditEvent.SaveAttachedImage -> {
+                SaveAttachedImagesUseCase(event.bitmap, event.applicationContext)
+                    .invoke().subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe({
+                        _saveAttachedImageLiveData.value = OneTimeEvent(Result.Success(it))
+                    }, {
+                        _saveAttachedImageLiveData.value = OneTimeEvent(Result.Failure(it))
+                    })
+            }
 
-            is AddEditEvent.ChangeNoteColor -> {
-                _state.value =
-                    _state.value?.copy(noteColor = event.noteColor, isColorPaletteVisible = false)
+            is AddEditEvent.DeleteAttachedImage -> {
+                Log.d("Here", "View Model Delete Image Event")
+                _deleteAttachedImageLiveData.value = OneTimeEvent(event.attachedImage)
             }
 
             is AddEditEvent.EditNoteEvent -> {
                 val note: Note = ViewNoteToDomainNote.map(event.note)
-
                 try {
                     noteUseCases.editNoteUseCase(note)
-                        .observeOn(Schedulers.newThread())
+                        .observeOn(AndroidSchedulers.mainThread())
                         .subscribeOn(Schedulers.io()) // the network call work
                         .subscribe(object : SingleObserver<Int> {
                             override fun onSubscribe(d: Disposable) {}
 
                             override fun onSuccess(t: Int) {
-                                editNoteSubject.onNext(event.note)
+                                _editNoteLiveData.value = OneTimeEvent(Result.Success(event.note))
                             }
 
                             override fun onError(e: Throwable) {
-                                editNoteSubject.onError(e)
+                                _editNoteLiveData.value = OneTimeEvent(Result.Failure(e))
                             }
                         })
                 }catch (e: InvalidNoteException){
@@ -95,18 +105,18 @@ class AddEditNoteViewModel @Inject constructor(
 
                     try {
                         noteUseCases.addNoteUseCase(note)
-                            .observeOn(Schedulers.newThread())
+                            .observeOn(AndroidSchedulers.mainThread())
                             .subscribeOn(Schedulers.io()) // the network call work
                             .subscribe(object : SingleObserver<Long> {
                             override fun onSubscribe(d: Disposable) {}
 
                             override fun onSuccess(t: Long) {
                                 event.note.id = t
-                                addNoteSubject.onNext(event.note)
+                                _addNoteLiveData.value = OneTimeEvent(Result.Success(event.note))
                             }
 
                             override fun onError(e: Throwable) {
-                                addNoteSubject.onError(e)
+                                _addNoteLiveData.value = OneTimeEvent(Result.Failure(e))
                             }
                         })
                     }catch (e: InvalidNoteException){

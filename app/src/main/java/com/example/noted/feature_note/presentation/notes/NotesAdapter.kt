@@ -23,8 +23,8 @@ class NotesAdapter(val notesActivityAdapterInterface: NotesFragmentAdapterInterf
     class NoteViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val noteTitleTV = itemView.findViewById<TextView>(R.id.noteTitle)
         val noteBodyTV = itemView.findViewById<TextView>(R.id.noteBody)
-        val noteCategoryTV = itemView.findViewById<TextView>(R.id.noteCategory)
-        val noteCardView = itemView.findViewById<MaterialCardView>(R.id.noteCardView)
+        val noteCategoryTV = itemView.findViewById<TextView>(R.id.noteCategoryTV)
+        val noteCardViewContainer = itemView.findViewById<MaterialCardView>(R.id.noteCardViewContainer)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NoteViewHolder {
@@ -38,13 +38,13 @@ class NotesAdapter(val notesActivityAdapterInterface: NotesFragmentAdapterInterf
         holder.noteTitleTV.text = notes[position].title
         holder.noteBodyTV.text = notes[position].content
         holder.noteCategoryTV.text = notes[position].category.toString()
-        holder.noteCardView.backgroundTintList = ColorStateList
+        holder.noteCardViewContainer.backgroundTintList = ColorStateList
             .valueOf(ContextCompat.getColor(holder.itemView.context, notes[position].color))
 
         if (notes[position].isSelected) {
-            holder.noteCardView.strokeWidth = 15
+            holder.noteCardViewContainer.strokeWidth = 15
         }else{
-            holder.noteCardView.strokeWidth = 0
+            holder.noteCardViewContainer.strokeWidth = 0
         }
 
         holder.itemView.setOnLongClickListener {

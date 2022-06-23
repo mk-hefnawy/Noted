@@ -1,5 +1,6 @@
 package com.example.noted.feature_note.domain.repository
 
+import com.example.noted.core.internet.InternetState
 import com.example.noted.feature_note.domain.model.Note
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Observable
@@ -12,5 +13,5 @@ interface NoteRepository {
     fun editNote(note: Note): Single<Int>
     fun deleteNotes(notesIds: List<Long>): Completable
     suspend fun getNoteById(noteId: Int): Note
-    fun getAllNotes(): Observable<List<Note>>
+    fun getAllNotes(hasInternet: InternetState): Observable<List<Note>>
 }

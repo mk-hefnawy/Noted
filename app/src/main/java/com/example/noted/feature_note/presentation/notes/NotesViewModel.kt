@@ -4,23 +4,20 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.noted.core.ListOfDomainNotesToListOfViewNotes
+import com.example.noted.core.internet.InternetState
 import com.example.noted.feature_note.domain.model.Note
 import com.example.noted.feature_note.domain.use_case.NoteUseCases
 import com.example.noted.feature_note.domain.utils.NoteOrder
-import com.example.noted.feature_note.domain.utils.OrderType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.CompletableObserver
-import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Observer
 import io.reactivex.rxjava3.core.SingleObserver
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
-import io.reactivex.rxjava3.subjects.PublishSubject
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 
 @HiltViewModel
@@ -34,13 +31,13 @@ class NotesViewModel @Inject constructor(
     val deleteState: LiveData<Boolean> = _deleteState
 
     init {
-        _state.value = NotesState()
+        // _state.value = NotesState()
     }
 
     fun onEvent(noteEvent: NoteEvent) {
         when (noteEvent) {
             is NoteEvent.GetAllNotesEvent -> {
-                getNotes(noteEvent.noteOrder)
+                getNotes(noteEvent.noteOrder, noteEvent.hasInternet)
             }
 
             is NoteEvent.OrderNoteEvent -> {
@@ -97,8 +94,8 @@ class NotesViewModel @Inject constructor(
         }
     }
 
-    private fun getNotes(noteOrder: NoteOrder) {
-        noteUseCases.getAllNotesUseCase(noteOrder)
+    private fun getNotes(noteOrder: NoteOrder, hasInternet: InternetState) {
+        noteUseCases.getAllNotesUseCase(noteOrder, hasInternet)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(object : Observer<List<Note>> {
@@ -107,7 +104,6 @@ class NotesViewModel @Inject constructor(
                 override fun onNext(notes: List<Note>) {
                     val viewNotes = ListOfDomainNotesToListOfViewNotes.map(notes)
                     _state.value = NotesState(notes = viewNotes)
-                    Log.d("Here", "getNotes NotesViewModel onNext")
                 }
 
                 override fun onError(e: Throwable) {

@@ -3,8 +3,10 @@ package com.example.noted.di
 import android.content.Context
 import androidx.room.Room
 import com.example.noted.core.NoteRepositoryInterMediator
+import com.example.noted.core.internet.InternetState
+import com.example.noted.feature_auth.domain.use_cases.HasInternetConnectionUseCase
 import com.example.noted.feature_note.data.data_source.cache.NotesRoomDatabase
-import com.example.noted.feature_note.data.repository.NoteRepositoryImpl
+import com.example.noted.feature_note.data.repository.NotesService
 import com.example.noted.feature_note.domain.repository.NoteRepository
 import com.example.noted.feature_note.domain.use_case.*
 import dagger.Module
@@ -12,6 +14,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Inject
 import javax.inject.Singleton
 
 @Module
@@ -28,14 +31,14 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideNotesRepositoryWithCache(noteRepositoryImpl: NoteRepositoryImpl): NoteRepository{
-            return NoteRepositoryInterMediator(noteRepositoryImpl)
+    fun provideNotesRepositoryWithCache(notesService: NotesService): NoteRepository{
+            return NoteRepositoryInterMediator(notesService)
     }
 
     @Provides
     @Singleton
-    fun provideNoteRepositoryImplWithCache(notesRoomDatabase: NotesRoomDatabase): NoteRepositoryImpl{
-        return NoteRepositoryImpl(notesRoomDatabase.roomNoteDao)
+    fun provideNoteRepositoryImplWithCache(notesRoomDatabase: NotesRoomDatabase): NotesService{
+        return NotesService(notesRoomDatabase.roomNoteDao)
     }
 
    /* @Provides
@@ -54,5 +57,11 @@ object AppModule {
             editNoteUseCase = EditNoteUseCase(repository),
             orderNotesUseCase = OrderNotesUseCase()
         )
+    }
+
+    @Provides
+    @Singleton
+    fun provideInternetUseCase(@ApplicationContext context: Context): HasInternetConnectionUseCase{
+        return HasInternetConnectionUseCase(context)
     }
 }

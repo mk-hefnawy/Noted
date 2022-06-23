@@ -3,14 +3,20 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/layout/activity_auth.xml" value="0.19010416666666666" />
         <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/layout/activity_main.xml" value="0.22" />
         <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/layout/activity_notes.xml" value="0.20416666666666666" />
         <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/layout/attach_option.xml" value="0.20416666666666666" />
         <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/layout/attached_image.xml" value="0.20416666666666666" />
         <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/layout/color_item.xml" value="0.22" />
-        <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/layout/fragment_add_edit.xml" value="0.22" />
+        <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/layout/fragment_add_edit.xml" value="0.18" />
+        <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/layout/fragment_attached_image.xml" value="0.18697916666666667" />
         <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/layout/fragment_notes.xml" value="0.20416666666666666" />
+        <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/layout/fragment_sign_in.xml" value="0.20416666666666666" />
+        <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/layout/fragment_sign_up.xml" value="0.18" />
+        <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/layout/note_category_item.xml" value="0.20416666666666666" />
         <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/layout/note_item.xml" value="0.22" />
+        <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/menu/attached_image_options_menu.xml" value="0.20416666666666666" />
         <entry key="..\:/ProgrammingFiles/Android Projects/Noted/app/src/main/res/menu/categories_menu.xml" value="0.20416666666666666" />
       </map>
     </option>

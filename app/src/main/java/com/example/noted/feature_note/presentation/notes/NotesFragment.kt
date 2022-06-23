@@ -15,11 +15,15 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.noted.R
 import com.example.noted.core.Extensions.animateVisibility
 import com.example.noted.core.ListOfDomainNotesToListOfViewNotes
 import com.example.noted.core.ListOfViewNotesToListOfDomainNotes
+import com.example.noted.core.Result
+import com.example.noted.core.internet.InternetState
+import com.example.noted.core.internet.InternetViewModel
 import com.example.noted.databinding.FragmentNotesBinding
 import com.example.noted.feature_note.domain.model.Note
 import com.example.noted.feature_note.domain.utils.NoteOrder
@@ -30,11 +34,13 @@ import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class NotesFragment : Fragment(), NotesFragmentAdapterInterface, View.OnClickListener,
     NotesPresentationController {
-    // val notesViewModel: NotesViewModel by viewModels()
+    lateinit var internetViewModel: InternetViewModel
+
     lateinit var notesViewModel: NotesViewModel
     private lateinit var notesBinding: FragmentNotesBinding
     private lateinit var vibrationService: Vibrator
@@ -45,6 +51,7 @@ class NotesFragment : Fragment(), NotesFragmentAdapterInterface, View.OnClickLis
         savedInstanceState: Bundle?
     ): View {
         notesViewModel = ViewModelProvider(this).get(NotesViewModel::class.java)
+        internetViewModel  = ViewModelProvider(this).get(InternetViewModel::class.java)
         initBinding()
         return notesBinding.root
     }
@@ -53,7 +60,8 @@ class NotesFragment : Fragment(), NotesFragmentAdapterInterface, View.OnClickLis
         super.onResume()
         initAdapter()
         notesViewModel.state.value?.let {
-            adapter?.setNotes(it.notes) }
+            adapter?.setNotes(it.notes)
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -72,19 +80,53 @@ class NotesFragment : Fragment(), NotesFragmentAdapterInterface, View.OnClickLis
     private fun init() {
         notesViewModel = ViewModelProvider(this).get(NotesViewModel::class.java)
 
-        getAllNotes()
+        //getAllNotes()
         //restoreState()
+        observeInternetState()
         observeNotesState()
         observeDeleteState()
         setRadioButtonsListener()
         setOnClickListeners()
 
     }
-    private fun initAdapter(){
+
+    private fun initAdapter() {
         adapter = NotesAdapter(this)
         notesBinding.notesRecyclerView.adapter = adapter
         notesBinding.notesRecyclerView.layoutManager = GridLayoutManager(this.context, 2)
 
+    }
+
+    private fun observeInternetState(){
+        internetViewModel.internetState.observe(viewLifecycleOwner){
+            it.getContentIfNotHandled()?.let { result ->
+                when(result){
+                    is Result.Success ->{
+                        if (result.value == InternetState.Available){
+                            Toast.makeText(requireContext(), "Connected Fragment", Toast.LENGTH_SHORT).show()
+                            // get the notes from server and sync
+                            getAllNotes(InternetState.Available)
+
+                        }
+
+                        else if (result.value == InternetState.Lost){
+                            Toast.makeText(requireContext(), "Connection Lost Fragment", Toast.LENGTH_SHORT).show()
+                            // no Notes request, because the fragment already has the updated notes
+                        }
+
+                        else if (result.value == InternetState.UnAvailable){
+                            getAllNotes(InternetState.UnAvailable)
+                            Toast.makeText(requireContext(), "Not Connected Fragment", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+
+                    is Result.Failure ->{
+                        Toast.makeText(requireContext(), "Error Connection Fragment", Toast.LENGTH_SHORT).show()
+                        result.throwable.printStackTrace()
+                    }
+                }
+            }
+        }
     }
 
     private fun observeDeleteState() {
@@ -100,10 +142,9 @@ class NotesFragment : Fragment(), NotesFragmentAdapterInterface, View.OnClickLis
         }
     }
 
-
-
     private fun observeNotesState() {
         notesViewModel.state.observe(viewLifecycleOwner) { notesState ->
+            Log.d("Here", "Notes State Live Data")
             notesState?.let {
                 if (adapter == null) {
                     initAdapter()
@@ -127,12 +168,28 @@ class NotesFragment : Fragment(), NotesFragmentAdapterInterface, View.OnClickLis
             FragmentNotesBinding.inflate(layoutInflater) // we got a binding instance holding the views of fragment_notes.xml
     }
 
-    private fun getAllNotes() {
-        notesViewModel.state.value?.let {
+    private fun getAllNotes(internetState: InternetState) {
+        if (isFirstTimeGettingNotes()|| suddenlyAConnectionIsFound(internetState)){
+            notesViewModel.onEvent(NoteEvent.GetAllNotesEvent(NoteOrder.Date(OrderType.Descending), internetState))
+            Log.d("Here", "State is Null")
+        }else{
+
+            Log.d("Here", "State is NOT Null")
+        }
+
+        /*notesViewModel.state.value?.let {
             notesViewModel.onEvent(NoteEvent.GetAllNotesEvent(it.noteOrder))
             return
         }
-        notesViewModel.onEvent(NoteEvent.GetAllNotesEvent(NoteOrder.Date(OrderType.Descending)))
+        notesViewModel.onEvent(NoteEvent.GetAllNotesEvent(NoteOrder.Date(OrderType.Descending)))*/
+    }
+
+    private fun isFirstTimeGettingNotes(): Boolean{
+        return notesViewModel.state.value == null
+    }
+
+    private fun suddenlyAConnectionIsFound(internetState: InternetState): Boolean{
+        return notesViewModel.state.value != null && internetState == InternetState.Available
     }
 
     private fun restoreState() {
@@ -166,7 +223,7 @@ class NotesFragment : Fragment(), NotesFragmentAdapterInterface, View.OnClickLis
         fragment.arguments = bundle
 
         parentFragmentManager.beginTransaction()
-            .replace(R.id.fragmentsContainer, fragment)
+            .replace(R.id.fragmentsContainer, fragment, "AddEditFragment")
             .addToBackStack(null)
             .commit()
     }
@@ -175,10 +232,10 @@ class NotesFragment : Fragment(), NotesFragmentAdapterInterface, View.OnClickLis
         // Make Vibration
         vibrationService = context?.getSystemService(AppCompatActivity.VIBRATOR_SERVICE) as Vibrator
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.O) {
-            val vibrationEffect = VibrationEffect.createOneShot(500, 1)
+            val vibrationEffect = VibrationEffect.createOneShot(100, 1)
             vibrationService.vibrate(vibrationEffect)
         } else {
-            vibrationService.vibrate(500)
+            vibrationService.vibrate(100)
         }
 
         // Show a Top Sheet with the word Delete

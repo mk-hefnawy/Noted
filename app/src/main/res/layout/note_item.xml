@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView
-    android:id="@+id/noteCardView"
+    android:id="@+id/noteCardViewContainer"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -32,25 +32,6 @@
         />
 
     <TextView
-        android:id="@+id/noteCategory"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-
-        android:text="Note Category"
-
-        app:layout_constraintStart_toEndOf="@id/noteLeftGuideline"
-        app:layout_constraintTop_toBottomOf="@id/noteTitle"/>
-
-   <!-- <ImageView
-        android:id="@+id/noteOptions"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/outline_more_vert_black_36"
-
-        app:layout_constraintTop_toBottomOf="@id/noteTopGuideline"
-        app:layout_constraintEnd_toStartOf="@id/noteRightGuideline"/>-->
-
-    <TextView
         android:id="@+id/noteBody"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -58,9 +39,33 @@
         android:ellipsize="end"
 
         app:layout_constraintStart_toEndOf="@id/noteLeftGuideline"
-        app:layout_constraintEnd_toStartOf="@id/noteRightGuideline"
-        app:layout_constraintTop_toBottomOf="@id/noteCategory"
+        app:layout_constraintEnd_toStartOf="@id/noteCategoryContainer"
+        app:layout_constraintTop_toBottomOf="@id/noteTitle"
         app:layout_constraintBottom_toTopOf="@id/noteBottomGuideline"/>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/noteCategoryContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="@dimen/_8sdp"
+        android:layout_margin="@dimen/_1sdp"
+        android:backgroundTint="@color/blue"
+
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@id/noteCategoryGuideline">
+
+        <TextView
+            android:id="@+id/noteCategoryTV"
+            android:textSize="@dimen/_8sdp"
+            android:textColor="@color/white"
+            android:layout_gravity="center"
+
+            android:padding="@dimen/_3sdp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+    </androidx.cardview.widget.CardView>
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/noteBottomGuideline"
@@ -89,6 +94,13 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         app:layout_constraintGuide_percent="0.97"/>
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/noteCategoryGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.69" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

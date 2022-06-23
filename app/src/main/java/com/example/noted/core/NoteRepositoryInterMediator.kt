@@ -1,38 +1,44 @@
 package com.example.noted.core
 
-import com.example.noted.feature_note.data.repository.NoteRepositoryImpl
+import android.util.Log
+import com.example.noted.core.internet.InternetState
+import com.example.noted.feature_note.data.repository.NotesService
 import com.example.noted.feature_note.domain.model.Note
 import com.example.noted.feature_note.domain.repository.NoteRepository
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
-import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class NoteRepositoryInterMediator @Inject constructor(
-    private val noteRepositoryImpl: NoteRepositoryImpl
+    private val notesService: NotesService
 ) : NoteRepository {
 
     override fun addNotes(note: Note): Single<Long> {
         val roomNote = DomainNoteToRoomNote.map(note)
-        return noteRepositoryImpl.addNotes(roomNote)
+        return notesService.addNotes(roomNote)
     }
 
     override fun editNote(note: Note): Single<Int> {
         val roomNote = DomainNoteToRoomNote.map(note)
-        return noteRepositoryImpl.editNote(roomNote)
+        return notesService.editNote(roomNote)
     }
 
     override fun deleteNotes(notesIds: List<Long>): Completable {
-        return noteRepositoryImpl.deleteNotes(notesIds)
+        return notesService.deleteNotes(notesIds)
     }
 
     override suspend fun getNoteById(noteId: Int): Note {
-        return noteRepositoryImpl.getNoteById(noteId).let { roomNote ->  RoomNoteToDomainNote.map(roomNote) }
+        return notesService.getNoteById(noteId).let { roomNote ->  RoomNoteToDomainNote.map(roomNote) }
     }
 
-    override fun getAllNotes(): Observable<List<Note>> {
-        return noteRepositoryImpl.getAllNotes().let {
+    override fun getAllNotes(hasInternet: InternetState): Observable<List<Note>> {
+        if (hasInternet == InternetState.Available){
+            Log.d("Here", "Repository Here, We got Connection")
+        }else{
+            Log.d("Here", "Repository Here, We don't have Connection, Sir")
+        }
+        return notesService.getAllNotes().let {
                 flowOfListOfRoomNotes -> ObservableOfListOfRoomNotesToObservableOfListOfDomainNotes.map(flowOfListOfRoomNotes) }
     }
 }

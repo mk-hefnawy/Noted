@@ -16,7 +16,6 @@
         android:background="@color/white"
         tools:context=".feature_note.presentation.add_edit_note.AddEditFragment">
 
-
         <ImageView
             android:id="@+id/addEditFragmentBack"
             android:layout_width="wrap_content"
@@ -103,9 +102,9 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             style="@style/NoteTitle"
+            android:layout_marginEnd="@dimen/_5sdp"
 
-
-            app:layout_constraintEnd_toStartOf="@+id/rightGuideline"
+            app:layout_constraintEnd_toStartOf="@+id/categoryChooseContainer"
             app:layout_constraintStart_toEndOf="@id/leftGuideline"
             app:layout_constraintTop_toBottomOf="@+id/colorsRecyclerViewContainer">
 
@@ -117,8 +116,31 @@
                 android:background="@color/lightGrey"
                 android:hint="What do you want to do?"
                 android:maxLines="1"
-
                 android:padding="@dimen/_10sdp" />
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/categoryChooseContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/blue"
+            app:cardCornerRadius="@dimen/_7sdp"
+
+            app:layout_constraintBottom_toBottomOf="@+id/noteTitleETContainer"
+            app:layout_constraintEnd_toStartOf="@+id/rightGuideline"
+            app:layout_constraintStart_toEndOf="@id/noteTitleETContainer"
+            app:layout_constraintTop_toBottomOf="@+id/colorsRecyclerViewContainer">
+
+            <Spinner
+                android:id="@+id/categorySpinner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:layout_gravity="center"
+                android:foregroundGravity="center"
+                android:gravity="center"
+                />
+
         </androidx.cardview.widget.CardView>
 
         <androidx.cardview.widget.CardView

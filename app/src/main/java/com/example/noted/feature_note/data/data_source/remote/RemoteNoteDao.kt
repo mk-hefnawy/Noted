@@ -1,20 +1,17 @@
 package com.example.noted.feature_note.data.data_source.remote
 
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import com.example.noted.feature_note.data.model.RemoteNote
-import com.example.noted.feature_note.data.model.RoomNote
+import com.example.noted.feature_note.data.model.DataNote
+import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Observable
-import kotlinx.coroutines.flow.Flow
-// has to know only RemoteNote
+import io.reactivex.rxjava3.core.Single
+
 interface RemoteNoteDao {
 
-    suspend fun addNote(note: RoomNote)
+    fun addNote(note: DataNote): Completable
 
-    fun getAllNotes(): Observable<List<RoomNote>>
+    fun getAllNotes(): Observable<List<DataNote>>
 
-    suspend fun getNoteById(noteId: Int): RoomNote
+    fun getNoteById(noteId: Int): DataNote
 
-    suspend fun deleteNote(note: RoomNote)
+    fun deleteNote(note: DataNote)
 }

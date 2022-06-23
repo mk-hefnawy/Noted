@@ -3,6 +3,10 @@
     package="com.example.noted">
 
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
     <application
         android:name=".di.NotedApp"
         android:allowBackup="true"
@@ -12,13 +16,18 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Noted">
         <activity
-            android:name=".feature_note.presentation.notes.NotesActivity"
-            android:exported="true">
+            android:name=".feature_auth.presentation.AuthActivity"
+            android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name=".feature_note.presentation.notes.NotesActivity"
+            android:exported="true">
+
         </activity>
     </application>
 

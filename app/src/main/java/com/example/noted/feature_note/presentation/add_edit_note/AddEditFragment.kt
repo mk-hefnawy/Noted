@@ -12,41 +12,40 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.noted.R
 import com.example.noted.core.Extensions.animateInvisibility
-import com.example.noted.core.Extensions.animateVisibility
-import com.example.noted.core.Extensions.animateVisibilityFromOffsetVertically
 import com.example.noted.databinding.FragmentAddEditBinding
 import com.example.noted.feature_note.domain.model.NoteCategory
-import com.example.noted.feature_note.presentation.add_edit_note.attach_files.AttachOptionType
-import com.example.noted.feature_note.presentation.add_edit_note.attach_files.AttachOptionsAdapter
-import com.example.noted.feature_note.presentation.add_edit_note.attach_files.AttachOptionsInterface
-import com.example.noted.feature_note.presentation.add_edit_note.attach_files.AttachedImagesAdapter
+import com.example.noted.core.Result
+import com.example.noted.feature_note.presentation.add_edit_note.attach_files.*
+import com.example.noted.feature_note.presentation.model.AttachedImage
 import com.example.noted.feature_note.presentation.model.ViewNote
-import com.example.noted.feature_note.presentation.notes.NotesFragment
 import com.google.gson.Gson
 import dagger.hilt.android.AndroidEntryPoint
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Observer
 import io.reactivex.rxjava3.disposables.Disposable
-import kotlinx.coroutines.launch
-import java.time.LocalDateTime
 import java.util.*
+
 
 @AndroidEntryPoint
 class AddEditFragment : Fragment(), View.OnClickListener, AddEditPresentationController,
-    AttachOptionsInterface {
+    AttachOptionsInterface, AttachedImageInterface {
     private lateinit var addEditFragmentBinding: FragmentAddEditBinding
-    val addEditViewModel: AddEditNoteViewModel by viewModels()
+    lateinit var addEditViewModel: AddEditNoteViewModel
     private lateinit var adapter: ColorPaletteAdapter
+    private lateinit var spinnerAdapter: ArrayAdapter<NoteCategory>
     private lateinit var attachedImagesAdapter: AttachedImagesAdapter
+
 
     companion object {
         const val GALLERY_CODE = 4
@@ -58,6 +57,8 @@ class AddEditFragment : Fragment(), View.OnClickListener, AddEditPresentationCon
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        addEditViewModel =
+            ViewModelProvider(requireActivity()).get(AddEditNoteViewModel::class.java)
         addEditFragmentBinding = FragmentAddEditBinding.inflate(layoutInflater)
         return addEditFragmentBinding.root
     }
@@ -68,9 +69,12 @@ class AddEditFragment : Fragment(), View.OnClickListener, AddEditPresentationCon
         registerOnClickListeners()
         observeAddNote()
         observeEditNote()
+        observeSaveAttachedImage()
+        observeDeleteAttachedImage()
         observeState()
         restoreState()
-        if (savedInstanceState == null){
+
+        if (savedInstanceState == null) {
             handleArguments()
         }
 
@@ -80,6 +84,7 @@ class AddEditFragment : Fragment(), View.OnClickListener, AddEditPresentationCon
         initColorsPaletteAdapter()
         initAttachOptionsAdapter()
         initAttachedImagesAdapter()
+        initSpinner()
     }
 
     private fun observeState() {
@@ -91,13 +96,14 @@ class AddEditFragment : Fragment(), View.OnClickListener, AddEditPresentationCon
     }
 
     private fun populateViewWithState(state: AddEditState) {
-        Log.d("Here", "populate")
+        Log.d("Here", "Populate: Attached Images: ${state.attachedImages.size}")
         addEditFragmentBinding.noteTitleET.setText(state.noteTitle)
         addEditFragmentBinding.noteBodyET.setText(state.noteBody)
+        addEditFragmentBinding.categorySpinner.setSelection(spinnerAdapter.getPosition(state.noteCategory))
         addEditFragmentBinding.noteBodyETContainer.backgroundTintList =
             ColorStateList.valueOf(ContextCompat.getColor(requireContext(), state.noteColor))
 
-        initAttachedImagesAdapter(state.attachedImagesUris)
+        initAttachedImagesAdapter(state.attachedImages)
 
         if (state.isColorPaletteVisible) addEditFragmentBinding.colorsRecyclerViewContainer.visibility =
             View.VISIBLE
@@ -111,17 +117,11 @@ class AddEditFragment : Fragment(), View.OnClickListener, AddEditPresentationCon
             addEditViewModel.onEvent(
                 AddEditEvent.StateChangeEvent(
                     AddEditState(
-                        note.title, note.content, false,
-                        note.color, note.imagesUris ?: mutableListOf()
+                        note.id, note.title, note.content, note.category, false,
+                        note.color, note.attachedImages as MutableList<AttachedImage>
                     )
                 )
             )
-            //addEditFragmentBinding.noteTitleET.setText(note.title)
-            //addEditFragmentBinding.noteBodyET.setText(note.content)
-            /*ote.imagesUris?.let { uris ->
-                addEditFragmentBinding.attachedImagesContainer.visibility = View.VISIBLE
-                initAttachedImagesAdapter(uris)
-            }*/
         }
     }
 
@@ -146,7 +146,7 @@ class AddEditFragment : Fragment(), View.OnClickListener, AddEditPresentationCon
     }
 
     private fun restoreAttachedImages() {
-        initAttachedImagesAdapter(addEditViewModel.state.value?.attachedImagesUris)
+        initAttachedImagesAdapter(addEditViewModel.state.value?.attachedImages)
         addEditFragmentBinding.attachedImagesContainer.visibility = View.VISIBLE
     }
 
@@ -167,8 +167,8 @@ class AddEditFragment : Fragment(), View.OnClickListener, AddEditPresentationCon
             GridLayoutManager(requireContext(), 2)
     }
 
-    private fun initAttachedImagesAdapter(uris: List<String>? = null) {
-        attachedImagesAdapter = AttachedImagesAdapter()
+    private fun initAttachedImagesAdapter(images: List<AttachedImage>? = null) {
+        attachedImagesAdapter = AttachedImagesAdapter(this)
 
         addEditFragmentBinding.attachedImagesRecyclerView.adapter = attachedImagesAdapter
         addEditFragmentBinding.attachedImagesRecyclerView.layoutManager =
@@ -176,53 +176,167 @@ class AddEditFragment : Fragment(), View.OnClickListener, AddEditPresentationCon
                 orientation = LinearLayoutManager.HORIZONTAL
             }
 
-        uris?.let {
-            Log.d("Here", "uris?.let ${uris.size}")
-            attachedImagesAdapter.setItems(uris)
+        images?.let {
+            attachedImagesAdapter.setItems(it)
             addEditFragmentBinding.attachedImagesContainer.visibility = View.VISIBLE
         }
     }
 
+    private fun initSpinner() {
+        val categories = arrayOf(
+            NoteCategory.RELIGION,
+            NoteCategory.WORK,
+            NoteCategory.FAMILY,
+            NoteCategory.LEARNING,
+            NoteCategory.HOBBY,
+            NoteCategory.LIFE
+        )
+        spinnerAdapter = ArrayAdapter(requireContext(), R.layout.note_category_item, categories)
+        spinnerAdapter.setDropDownViewResource(R.layout.note_category_item)
+        addEditFragmentBinding.categorySpinner.adapter = spinnerAdapter
+
+        addEditFragmentBinding.categorySpinner.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    p0: AdapterView<*>?,
+                    p1: View?,
+                    position: Int,
+                    p3: Long
+                ) {
+                    val newState = addEditViewModel.state.value?.copy(
+                        noteTitle = addEditFragmentBinding.noteTitleET.text.toString(),
+                        noteBody = addEditFragmentBinding.noteBodyET.text.toString(),
+                        noteCategory = categories[position]
+                    ) ?: AddEditState(
+                        null,
+                        addEditFragmentBinding.noteTitleET.text.toString(),
+                        addEditFragmentBinding.noteBodyET.text.toString(),
+                        categories[position],
+                        false,
+                        R.color.white,
+                        mutableListOf()
+                    )
+
+                    addEditViewModel.onEvent(AddEditEvent.StateChangeEvent(newState))
+                }
+
+                override fun onNothingSelected(p0: AdapterView<*>?) {
+                    Toast.makeText(requireContext(), "Selected: Nothing", Toast.LENGTH_LONG).show()
+                }
+
+            }
+
+    }
+
     private fun observeAddNote() {
-        addEditViewModel.addNoteSubject
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(object : Observer<ViewNote> {
-                override fun onSubscribe(d: Disposable) {}
-
-                override fun onNext(note: ViewNote) {
-                    onAddNoteCompleted(note)
+        addEditViewModel.addNoteLiveData.observe(viewLifecycleOwner) { oneTimeEvent ->
+            oneTimeEvent.getContentIfNotHandled()?.let {
+                when (it) {
+                    is Result.Success -> {
+                        onAddNoteCompleted(it.value!!)
+                    }
+                    is Result.Failure -> {
+                        Toast.makeText(requireContext(), "Note Add Failed", Toast.LENGTH_SHORT)
+                            .show()
+                        it.throwable.printStackTrace()
+                    }
                 }
-
-                override fun onError(e: Throwable) {
-                    Toast.makeText(requireContext(), "Note Add Failed", Toast.LENGTH_SHORT).show()
-                    e.printStackTrace()
-                }
-
-                override fun onComplete() {
-                    TODO("Not yet implemented")
-                }
-            })
+            }
+        }
     }
 
     private fun observeEditNote() {
-        addEditViewModel.editNoteSubject
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(object : Observer<ViewNote> {
-                override fun onSubscribe(d: Disposable) {}
+        addEditViewModel.editNoteLiveData.observe(viewLifecycleOwner) { oneTimeEvent ->
+            oneTimeEvent.getContentIfNotHandled()?.let {
+                when (it) {
+                    is Result.Success -> {
+                        onEditNoteCompleted(it.value!!)
+                    }
+                    is Result.Failure -> {
+                        Toast.makeText(requireContext(), "Note Edit Failed", Toast.LENGTH_SHORT)
+                            .show()
+                        it.throwable.printStackTrace()
+                    }
+                }
+            }
 
-                override fun onNext(note: ViewNote) {
-                    onEditNoteCompleted(note)
+        }
+
+    }
+
+    private fun observeSaveAttachedImage() {
+        addEditViewModel.saveAttachedImageLiveData.observe(viewLifecycleOwner) { result ->
+            result?.let { oneTimeEvent ->
+                oneTimeEvent.getContentIfNotHandled()?.let {
+                    when (it) {
+                        is Result.Success -> {
+                            showAttachedImage(it.value!!)
+                        }
+
+                        is Result.Failure -> {
+                            Toast.makeText(
+                                requireContext(),
+                                "Something went wrong",
+                                Toast.LENGTH_SHORT
+                            )
+                                .show()
+                            it.throwable.printStackTrace()
+                        }
+                    }
                 }
 
-                override fun onError(e: Throwable) {
-                    Toast.makeText(requireContext(), "Note Edit Failed", Toast.LENGTH_SHORT).show()
-                    e.printStackTrace()
-                }
+            }
+        }
+    }
 
-                override fun onComplete() {
-                    TODO("Not yet implemented")
-                }
-            })
+    private fun observeDeleteAttachedImage() {
+        Log.d("Here", "Observe Delete")
+        addEditViewModel.deleteAttachedImageLiveData.observe(viewLifecycleOwner) { oneTimeEvent ->
+            oneTimeEvent.getContentIfNotHandled()?.let { attachedImage ->
+                Log.d("Here", "Attached Image Observe")
+                removeAttachedImageFromState(attachedImage)
+            }
+        }
+
+
+    }
+
+    /*  private fun deleteAttachedImage(image: AttachedImage) {
+          addEditViewModel.state.value?.let {
+              val currentImages = it.attachedImages
+              currentImages.remove(image)
+              addEditViewModel.onEvent(AddEditEvent.EditNoteEvent(
+                  ViewNote(
+                      id = it.noteId,
+                      title = it.noteTitle,
+                      content = it.noteBody,
+                      category = it.noteCategory,
+                      date = Date(),
+                      it.noteColor,
+                      false,
+                      currentImages
+                  )
+              ))
+          }
+
+      }*/
+
+    private fun removeAttachedImageFromState(image: AttachedImage) {
+        Log.d("Here", "Remove Image")
+        addEditViewModel.state.value?.let {
+            val stateImages = it.attachedImages
+            // val afterDelete = stateImages.filter { currentImage -> currentImage.id != image.id } as MutableList
+            stateImages.remove(image)
+            Log.d("Here", "Images After Removal: ${stateImages.size}")
+            addEditViewModel.onEvent(
+                AddEditEvent.StateChangeEvent(
+                    it.copy(
+                        attachedImages = stateImages
+                    )
+                )
+            )
+        }
+
     }
 
     private fun registerOnClickListeners() {
@@ -233,24 +347,34 @@ class AddEditFragment : Fragment(), View.OnClickListener, AddEditPresentationCon
     }
 
     private fun onChooseColorClicked() {
-        Log.d("Here", "Choose Color Image View Clicked")
         if (addEditViewModel.state.value?.isColorPaletteVisible ?: false) {
             addEditFragmentBinding.colorsRecyclerViewContainer.visibility = View.GONE
         } else {
             addEditFragmentBinding.colorsRecyclerViewContainer.visibility = View.VISIBLE
         }
 
-        addEditViewModel.onEvent(AddEditEvent.ToggleColorPaletteVisibility)
+        addEditViewModel.onEvent(
+            AddEditEvent.StateChangeEvent(
+                addEditViewModel.state.value?.copy(
+                    noteTitle = addEditFragmentBinding.noteTitleET.text.toString(),
+                    noteBody = addEditFragmentBinding.noteBodyET.text.toString(),
+                    isColorPaletteVisible = !(addEditViewModel.state.value?.isColorPaletteVisible
+                        ?: true)
+                ) ?: AddEditState(
+                    null,
+                    addEditFragmentBinding.noteTitleET.text.toString(),
+                    addEditFragmentBinding.noteBodyET.text.toString(),
+                    NoteCategory.default, true, R.color.white, mutableListOf()
+                )
+            )
+        )
     }
 
     private fun onAddNoteCompleted(note: ViewNote) {
         // Hide Progress bar
         // Toast
         Toast.makeText(requireContext(), "Note Added with Id ${note.id}", Toast.LENGTH_SHORT).show()
-        // Open Notes Fragment
-        parentFragmentManager.beginTransaction()
-            .replace(R.id.fragmentsContainer, NotesFragment())
-            .commit()
+        parentFragmentManager.popBackStack()
     }
 
     private fun onEditNoteCompleted(note: ViewNote) {
@@ -258,10 +382,7 @@ class AddEditFragment : Fragment(), View.OnClickListener, AddEditPresentationCon
         // Toast
         Toast.makeText(requireContext(), "Note Edited with Id ${note.id}", Toast.LENGTH_SHORT)
             .show()
-        // Open Notes Fragment
-        parentFragmentManager.beginTransaction()
-            .replace(R.id.fragmentsContainer, NotesFragment())
-            .commit()
+        parentFragmentManager.popBackStack()
     }
 
     private fun onBackArrowPressed() {
@@ -269,7 +390,7 @@ class AddEditFragment : Fragment(), View.OnClickListener, AddEditPresentationCon
     }
 
     private fun onSaveNoteClicked() {
-        var note: ViewNote? = null
+        val note: ViewNote?
 
         if (arguments != null) {
             val noteId = Gson().fromJson(arguments?.getString("note"), ViewNote::class.java).id
@@ -277,20 +398,24 @@ class AddEditFragment : Fragment(), View.OnClickListener, AddEditPresentationCon
                 id = noteId,
                 title = addEditFragmentBinding.noteTitleET.text.toString(),
                 content = addEditFragmentBinding.noteBodyET.text.toString(),
-                category = NoteCategory.WORK,
-                date = Date(),
+                category = addEditViewModel.state.value?.noteCategory ?: NoteCategory.default,
+                date = Date(), // Last Edited: new Date
                 color = addEditViewModel.state.value?.noteColor ?: R.color.white,
-                isSelected = false
+                isSelected = false,
+                attachedImages = addEditViewModel.state.value?.attachedImages
+                    ?: mutableListOf()
             )
             addEditViewModel.onEvent(AddEditEvent.EditNoteEvent(note))
         } else {
             note = ViewNote(
                 title = addEditFragmentBinding.noteTitleET.text.toString(),
                 content = addEditFragmentBinding.noteBodyET.text.toString(),
-                category = NoteCategory.WORK,
+                category = addEditViewModel.state.value?.noteCategory ?: NoteCategory.default,
                 date = Date(),
                 color = addEditViewModel.state.value?.noteColor ?: R.color.white,
-                isSelected = false
+                isSelected = false,
+                attachedImages = addEditViewModel.state.value?.attachedImages
+                    ?: mutableListOf()
             )
             addEditViewModel.onEvent(AddEditEvent.AddNoteEvent(note))
         }
@@ -311,7 +436,29 @@ class AddEditFragment : Fragment(), View.OnClickListener, AddEditPresentationCon
             ColorStateList.valueOf(ContextCompat.getColor(requireContext(), color))
 
         addEditFragmentBinding.colorsRecyclerViewContainer.visibility = View.GONE
-        addEditViewModel.onEvent(AddEditEvent.ChangeNoteColor(color))
+
+        // if there is a state already
+        addEditViewModel.state.value?.let {
+            addEditViewModel.onEvent(
+                AddEditEvent.StateChangeEvent(
+                    addEditViewModel.state.value!!.copy(
+                        noteColor = color
+                    )
+                )
+            )
+            return
+        }
+        // if there is no state yet
+        addEditViewModel.onEvent(
+            AddEditEvent.StateChangeEvent(
+                AddEditState(
+                    null,
+                    addEditFragmentBinding.noteTitleET.text.toString(),
+                    addEditFragmentBinding.noteBodyET.text.toString(), NoteCategory.default, false,
+                    color, mutableListOf()
+                )
+            )
+        )
     }
 
     private fun onAttachFileClicked() {
@@ -339,7 +486,7 @@ class AddEditFragment : Fragment(), View.OnClickListener, AddEditPresentationCon
             Toast.makeText(requireContext(), "Cicked", Toast.LENGTH_SHORT).show()
             openGallery()
         } else {
-
+            openCamera()
         }
     }
 
@@ -351,33 +498,70 @@ class AddEditFragment : Fragment(), View.OnClickListener, AddEditPresentationCon
         startActivityForResult(Intent.createChooser(intent, "Choose Your Picture"), GALLERY_CODE)
     }
 
-    private fun addAttachedImage(uri: String) {
-        val newImages = mutableListOf<String>()
-        newImages.addAll(attachedImagesAdapter.images)
-        newImages.add(uri)
-        attachedImagesAdapter.setItems(newImages)
+    private fun openCamera() {
+        val intent = Intent().apply {
+            type = "image/*"
+            action = "android.media.action.IMAGE_CAPTURE"
+        }
+        startActivityForResult(intent, CAMERA_CODE)
+    }
 
+    private fun showAttachedImage(path: String) {
+        val images: MutableList<AttachedImage> =
+            addEditViewModel.state.value?.attachedImages ?: mutableListOf()
+        images.add(AttachedImage(System.currentTimeMillis().toString(), path, false))
+
+        // if state is not null
+        addEditViewModel.state.value?.let {
+            addEditViewModel.state.value?.copy(attachedImages = images)
+                ?.let { AddEditEvent.StateChangeEvent(it) }
+                ?.let { addEditViewModel.onEvent(it) }
+            return
+        }
+        // if state is null
+        addEditViewModel.onEvent(
+            AddEditEvent.StateChangeEvent(
+                AddEditState(
+                    null,
+                    addEditFragmentBinding.noteTitleET.text.toString(),
+                    addEditFragmentBinding.noteBodyET.text.toString(),
+                    NoteCategory.default,
+                    false,
+                    R.color.white, images
+                )
+            )
+        )
+
+        addEditFragmentBinding.attachedImagesContainer.visibility = View.VISIBLE
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == GALLERY_CODE) {
+        if (requestCode == GALLERY_CODE || requestCode == CAMERA_CODE) {
             if (resultCode == RESULT_OK) {
                 val imageUri = data?.data
-                // save the uri in the viewModel state
-                val uris: MutableList<String> =
-                    addEditViewModel.state.value?.attachedImagesUris ?: mutableListOf()
-                uris.add(imageUri.toString())
-
-                addEditViewModel.state.value?.copy(attachedImagesUris = uris)
-                    ?.let { AddEditEvent.StateChangeEvent(it) }
-                    ?.let { addEditViewModel.onEvent(it) }
-                // show it for the user
-                //addAttachedImage(imageUri.toString())
-                //initAttachedImagesAdapter(addEditViewModel.state.value.attachedImagesUris)
-                addEditFragmentBinding.attachedImagesContainer.visibility = View.VISIBLE
+                val bitmap =
+                    MediaStore.Images.Media.getBitmap(requireContext().contentResolver, imageUri)
+                // save the file to the internal storage and get the new uri
+                addEditViewModel.onEvent(
+                    AddEditEvent.SaveAttachedImage(
+                        bitmap,
+                        requireContext().applicationContext
+                    )
+                )
             }
         }
+    }
 
+    override fun onAttachedImageClicked(image: AttachedImage) {
+        val bundle = Bundle()
+        bundle.putString("image", Gson().toJson(image))
+        val fragment = AttachedImageFragment()
+        fragment.arguments = bundle
+
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragmentsContainer, fragment)
+            .addToBackStack(null)
+            .commit()
     }
 }
