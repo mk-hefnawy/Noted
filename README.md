@@ -30,10 +30,10 @@ The viewModel triggers the use case for that event and subscribe to the use case
 ## Technologies
 * Kotlin
 * ViewModel
-* Flow
-* Coroutines
+* RxAndroid
 * Room Database
 * Hilt
+* Gson
 
 
 ## Demo
