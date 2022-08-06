@@ -1,9 +1,12 @@
 # Noted
 ## Table of contents
+* [Demo](#demo)
 * [General info](#general-info)
 * [Architecture](#architecture)
 * [Technologies](#technologies)
-* [Demo](#demo)
+
+## Demo
+Working on it.
 
 ## General Info
 Noted is an android application for taking notes. The user can create, edit, review, and delete notes. They also can specify a category for each note.
@@ -36,5 +39,4 @@ The viewModel triggers the use case for that event and subscribe to the use case
 * Gson
 
 
-## Demo
-Working on it.
+
